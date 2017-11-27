@@ -1,5 +1,8 @@
 using PLists
 using Base.Test
 
-# write your own tests here
-@test 1 == 2
+@testset "All Tests" begin
+
+include("plist_tests.jl")
+
+end

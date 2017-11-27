@@ -1,5 +1,8 @@
 module PLists
 
-# package code goes here
+include("plist_lexer.jl")
+include("parser.jl")
+include("plist_parser.jl")
+include("plist_writer.jl")
 
-end # module
+end
