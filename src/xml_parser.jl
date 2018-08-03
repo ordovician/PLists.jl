@@ -61,6 +61,9 @@ nodes(n::ElementNode) = n.children
 elements(n::Node) = ElementNode[]
 elements(n::ElementNode) = filter(iselement, nodes(n))
 
+textnodes(n::Node) = TextNode[]
+textnodes(n::ElementNode) = filter(istext, nodes(n))
+
 "Get an array of attributes under node `n`"
 attributes(n::Node) = AttributeNode[]
 attributes(n::ElementNode) = [AttributeNode(name, value) for (name, value) in n.attributes]
@@ -189,8 +192,7 @@ end
 
 xmlparser(s::AbstractString) = Parser(lex_xml(s))
 
-"Parse a text string containing XML, and return an XML document object"
-function parsexml(xmlstring::AbstractString)
+function strip_xml_header(xmlstring::AbstractString)
     # Get the XML declaration. It is not part of the XML DOM, so we want
     # to exclude it.
     r = search(xmlstring, r"<\?xml.*\?>")
@@ -200,7 +202,7 @@ function parsexml(xmlstring::AbstractString)
     else
         s = xmlstring[last(r)+1:end]
         # Check encoding used
-        decl = s[r]
+        decl = xmlstring[r]
         m = match(r"encoding=\"([\w-]+)\"", decl)
         if isempty(m.captures)
             warn("Could not determine encoding, will assume UTF-8")
@@ -211,6 +213,18 @@ function parsexml(xmlstring::AbstractString)
             end
         end
     end
+    
+    # Skip DOC type as we don't handle it
+    r = search(s, r"<!DOCTYPE[^>]+>")
+    if !isempty(r)
+        s = s[last(r)+1:end]
+    end
+    return s    
+end
+
+"Parse a text string containing XML, and return an XML document object"
+function parsexml(xmlstring::AbstractString)
+    s = strip_xml_header(xmlstring)
     l = lex_xml(s)
     p = Parser(l)
     Document(parse_element(p))
