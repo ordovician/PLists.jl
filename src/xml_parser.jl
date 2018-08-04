@@ -5,9 +5,10 @@
 import Base: setindex!, getindex, show
 
 export  Node, Document, ElementNode, TextNode, AttributeNode,
-        nodename, iselement, istext, isattribute, hasroot, 
+        nodename, iselement, istext, isattribute, hasroot,
+        nodecontent, 
         countnodes, countattributes,
-        nodes, elements, attributes, eachattribute,
+        nodes, elements, textnodes, attributes, eachattribute,
         root, setroot!,
         addchild!, addelement!,
         parsexml,
@@ -103,6 +104,10 @@ hasroot(doc::Document) = !isnull(doc.rootnode)
 root(n::Document) = get(n.rootnode)
 setroot!(n::Document) = n.rootnode = Nullable(n)
 
+"Get content of all text nodes under `n`"
+nodecontent(n::TextNode) = n.content
+nodecontent(n::Node) = join(map(nodecontent, nodes(n)))
+
 function addelement!(parent::Node, name::AbstractString)
     child = ElementNode(name)
     addchild!(parent, child)
@@ -192,13 +197,13 @@ end
 
 xmlparser(s::AbstractString) = Parser(lex_xml(s))
 
-function strip_xml_header(xmlstring::AbstractString)
+function strip_xml_header(xmlstring::AbstractString, ignore_declaration::Bool)
     # Get the XML declaration. It is not part of the XML DOM, so we want
     # to exclude it.
     r = search(xmlstring, r"<\?xml.*\?>")
     s = xmlstring # assume there is no XML declaration until proven otherwise
     if isempty(r)
-        warn("Did not find any XML declaration such as <?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+        ignore_declaration || warn("Did not find any XML declaration such as <?xml version=\"1.0\" encoding=\"UTF-8\"?>")
     else
         s = xmlstring[last(r)+1:end]
         # Check encoding used
@@ -223,8 +228,8 @@ function strip_xml_header(xmlstring::AbstractString)
 end
 
 "Parse a text string containing XML, and return an XML document object"
-function parsexml(xmlstring::AbstractString)
-    s = strip_xml_header(xmlstring)
+function parsexml(xmlstring::AbstractString; ignore_declaration=false)
+    s = strip_xml_header(xmlstring, ignore_declaration)
     l = lex_xml(s)
     p = Parser(l)
     Document(parse_element(p))
@@ -244,6 +249,10 @@ end
 
 function show(io::IO, n::Node, depth::Integer = 0)
     print(io, "Unknown node type")
+end
+
+function show(io::IO, n::AttributeNode)
+   print(io, n.name, "=\"", n.value,"\"") 
 end
 
 function show(io::IO, n::TextNode, depth::Integer)

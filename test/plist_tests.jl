@@ -106,3 +106,71 @@ end
     @test writeplist_string([1, [2, 3], 4]) == "(1, (2, 3), 4)"
     @test writeplist_string(Dict("colors" => ["red", "green", "blue"])) == "{colors = (red, green, blue);}"
 end
+
+@testset "XML parser tests" begin
+    @testset "Test Element Node" begin
+        doc = parsexml("<key>Author</key>", ignore_declaration=true)
+        @test hasroot(doc)
+        r = root(doc)
+        @test nodename(r) == "key"
+        n = first(nodes(r))
+        @test istext(n)
+        @test nodecontent(n) == "Author"
+        @test countnodes(r) == 1
+    end
+    
+    @testset "Test Element Nodes Hierarchy" begin
+        doc = parsexml("<numbers><one>en</one><two>to</two><three>tre</three></numbers>", ignore_declaration=true)
+        @test hasroot(doc)
+        r = root(doc)
+        @test nodename(r) == "numbers"
+        @test nodecontent(r) == "entotre"
+        @test countnodes(r) == 3
+        
+        @test nodecontent(nodes(r)[1]) == "en"
+        @test nodecontent(nodes(r)[2]) == "to"
+        @test nodecontent(nodes(r)[3]) == "tre"
+        
+        @test nodename(nodes(r)[1]) == "one"
+        @test nodename(nodes(r)[2]) == "two"
+        @test nodename(nodes(r)[3]) == "three"
+    end
+    
+    @testset "Test Small Example" begin
+        doc = parsexml("""
+        <primates>
+            <genus name="Homo">
+                <species name="sapiens">Human</species>
+            </genus>
+            <genus name="Pan">
+                <species name="paniscus">Bonobo</species>
+                <species name="troglodytes">Chimpanzee</species>
+            </genus>
+        </primates>
+        """, ignore_declaration=true)
+        primates = root(doc)
+        @test nodename(primates) == "primates"
+        genus = nodes(primates)
+        @test countnodes(primates) == 2
+        @test nodecontent(genus[1]) == "Human"
+        homo_genus_attr = attributes(genus[1])
+        homo_attr = first(homo_genus_attr)
+        @test homo_attr.name == "name"
+        @test homo_attr.value == "Homo"
+    end
+end
+
+@testset "XML PList tests" begin
+    @testset "PList decoding tests" begin
+        dict = read_xml_plist("example.plist.xml")
+
+        @test !isempty(dict)
+        @test haskey(dict, "Author")
+        @test dict["Author"] == "William Shakespeare"
+        @test haskey(dict, "Lines")
+        @test length(dict["Lines"]) == 2
+        @test dict["Lines"][1]  == "It is a tale told by an idiot,"
+        @test dict["Lines"][2]  == "Full of sound and fury, signifying nothing."
+        @test dict["Birthdate"] == 1564
+    end
+end

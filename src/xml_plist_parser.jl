@@ -1,10 +1,5 @@
 export read_xml_plist_string, read_xml_plist
 
-function content(n::ElementNode)
-    kids = textnodes(n)
-    join(map(k->k.content, kids))
-end
-
 function parse_obj(n::ElementNode)
     tag = nodename(n)
     
@@ -18,9 +13,9 @@ function parse_obj(n::ElementNode)
             parse_obj(first(children))
         end
     elseif "integer" == tag || "real" == tag
-        parse(content(n))
+        parse(nodecontent(n))
     elseif "string" == tag
-        content(n)
+        nodecontent(n)
     elseif "true" == tag
         true
     elseif "false" == tag
@@ -28,10 +23,10 @@ function parse_obj(n::ElementNode)
     elseif "date" == tag
         df = Dates.DateFormat("yyyy-mm-dd")
         # TODO: include time info
-        date_string, time_string = split(content(n), 'T')
+        date_string, time_string = split(nodecontent(n), 'T')
         return Date(date_string, df)        
     elseif "data" == tag
-        base64decode(content(n))
+        base64decode(nodecontent(n))
     elseif "array" == tag
         parse_array(n)
     elseif "dict" == tag
@@ -54,7 +49,7 @@ function parse_dict(parent::ElementNode)
         keynode, it = next(children, it)
         if nodename(keynode) == "key"
             valuenode, it = next(children, it)
-            dict[content(keynode)] = parse_obj(valuenode)
+            dict[nodecontent(keynode)] = parse_obj(valuenode)
         else
             error("Expected XML node to be 'key' not '$(nodename(keynode))'")
         end
