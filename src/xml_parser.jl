@@ -2,7 +2,7 @@
 # parser. This is so EzXML can be a drop in replacement. The benefits of this
 # parser over EzXML is that it has no dependencies. It is all pure Julia code.
 # The downside is that it just supports the most common XML features
-import Base: setindex!, getindex
+import Base: setindex!, getindex, show
 
 export  Node, Document, ElementNode, TextNode, AttributeNode,
         nodename, iselement, istext, isattribute, hasroot, 
@@ -228,4 +228,53 @@ function parsexml(xmlstring::AbstractString)
     l = lex_xml(s)
     p = Parser(l)
     Document(parse_element(p))
+end
+
+function show(io::IO, doc::Document)
+  if hasroot(doc)
+    show(io, root(doc), 1)
+  else
+    print(io, "Document()")
+  end
+end
+
+function show(io::IO, n::TextNode)
+    print(io, n.content)
+end
+
+function show(io::IO, n::Node, depth::Integer = 0)
+    print(io, "Unknown node type")
+end
+
+function show(io::IO, n::TextNode, depth::Integer)
+    print(io, "  "^depth)
+    println(io, n.content)
+end
+
+function show(io::IO, parent::ElementNode, depth::Integer = 0)
+    print(io, "  "^depth)
+    
+    tag = nodename(parent)
+    print(io, "<$tag")
+    attrs = map(x -> first(x) * "=\"$(last(x))\"", collect(parent.attributes))
+    attr_str = join(sort(attrs), " ")
+    
+    if !isempty(attr_str)
+        print(io, " ", attr_str)
+    end
+    
+    children = nodes(parent)
+    len = length(children)
+
+    if len == 0 || (len == 1 && istext(first(children)))
+        print(io, ">")
+        for n in children show(io, n) end
+    else
+        println(io, ">")
+        for n in children
+            show(io, n, depth + 1)
+        end
+        print(io, "  "^depth)
+    end
+    println(io, "</$tag>")
 end
