@@ -27,16 +27,22 @@ function Document()
     Document(Nullable{Node}())
 end
 
+mutable struct AttributeNode <: Node
+    # parent::Node
+    name::String
+    value::String 
+end
+
 "XML Node which can contain attributes and child nodes"
 mutable struct ElementNode <: Node
     # parent::Node
     name::String
-    attributes::Dict{String, String}
+    attributes::Vector{AttributeNode}
     children::Vector{Node}
 end
 
 function ElementNode(name::AbstractString)
-    ElementNode(name, Dict{String, String}(), Node[])
+    ElementNode(name, AttributeNode[], Node[])
 end
 
 "Represents the text found between two tags. E.g. in `<foo>bar</foo>` bar is the `TextNode`"
@@ -45,14 +51,23 @@ mutable struct TextNode <: Node
     content::String
 end
 
-mutable struct AttributeNode <: Node
-    # parent::Node
-    name::String
-    value::String 
+function getindex(n::ElementNode, key::String)
+    for m in n.attributes
+        if m.name == key
+            return m.value
+        end
+    end
+    error("No attribute with key $key exist")
 end
 
-getindex(n::ElementNode, key::String) = n.attributes[key]
-setindex!(n::ElementNode, value::String, key::String) = n.attributes[key] = value
+function setindex!(n::ElementNode, value::String, key::String)
+    ii = find(m->m.name == key, n.attributes)
+    if isempty(ii)
+        push!(n.attributes, AttributeNode(key, value))
+    else
+        n.attributes[ii[1]] = value
+    end
+end
 
 "Get all child nodes under node `n`"
 nodes(n::Node) = Node[]
@@ -67,10 +82,10 @@ textnodes(n::ElementNode) = filter(istext, nodes(n))
 
 "Get an array of attributes under node `n`"
 attributes(n::Node) = AttributeNode[]
-attributes(n::ElementNode) = [AttributeNode(name, value) for (name, value) in n.attributes]
+attributes(n::ElementNode) = n.attributes
 
 "Gets a dictionary of attributes meant to use in a for loop for iteration"
-eachattribute(n::Node) = Dict{String, String}()
+eachattribute(n::Node) = AttributeNode[]
 eachattribute(n::ElementNode) = n.attributes
 
 nodename(n::Node) = ""
@@ -265,8 +280,8 @@ function show(io::IO, parent::ElementNode, depth::Integer = 0)
     
     tag = nodename(parent)
     print(io, "<$tag")
-    attrs = map(x -> first(x) * "=\"$(last(x))\"", collect(parent.attributes))
-    attr_str = join(sort(attrs), " ")
+    attrs = map(x -> x.name * "=\"$(x.value)\"", attributes(parent))
+    attr_str = join(attrs, " ")
     
     if !isempty(attr_str)
         print(io, " ", attr_str)
