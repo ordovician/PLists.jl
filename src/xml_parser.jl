@@ -51,6 +51,15 @@ mutable struct TextNode <: Node
     content::String
 end
 
+"Creates an element node named `name` with a text node containing text `value`"
+function ElementNode(name::AbstractString, value::AbstractString)
+    ElementNode(name, AttributeNode[], Node[TextNode(value)])
+end
+
+function ElementNode(name::AbstractString, nodes::Array{Node})
+    ElementNode(name, AttributeNode[], nodes)
+end
+
 function getindex(n::ElementNode, key::String)
     for m in n.attributes
         if m.name == key

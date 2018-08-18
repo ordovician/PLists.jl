@@ -173,4 +173,39 @@ end
         @test dict["Lines"][2]  == "Full of sound and fury, signifying nothing."
         @test dict["Birthdate"] == 1564
     end
+    
+    @testset "Simple PList tests" begin
+            dict = read_xml_plist_string(
+            """
+            <plist version="1.0">
+            <dict>
+                <key>egg</key>
+                <string>spam</string>
+                <key>numbers</key>
+                <array>
+                    <string>one</string>
+                    <string>two</string>
+                </array>
+            </dict>
+            </plist>""")
+            @test dict["egg"] == "spam"
+            @test dict["numbers"][1] == "one"
+            @test dict["numbers"][2] == "two"
+    end
+    
+    @testset "Test PList parsing independent from XML parsing" begin
+        root = ElementNode("plist")
+        root["version"] = "1.0"
+        strings  = Node[ElementNode("string", "one"), ElementNode("string", "two")] 
+        children = Node[ElementNode("key", "egg"), 
+                        ElementNode("string", "spam"),
+                        ElementNode("key", "numbers"),
+                        ElementNode("array", strings)]
+        addchild!(root, ElementNode("dict", children))
+        
+        dict = PLists.parse_obj(root)
+        @test dict["egg"] == "spam"
+        @test dict["numbers"][1] == "one"
+        @test dict["numbers"][2] == "two"
+    end
 end
