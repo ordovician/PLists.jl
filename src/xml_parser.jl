@@ -56,8 +56,14 @@ function ElementNode(name::AbstractString, value::AbstractString)
     ElementNode(name, AttributeNode[], Node[TextNode(value)])
 end
 
-function ElementNode(name::AbstractString, nodes::Array{Node})
+"Element node with children `nodes`"
+function ElementNode(name::AbstractString, nodes::Array{T}) where T <: Node
     ElementNode(name, AttributeNode[], nodes)
+end
+
+"""Element node with attributes given like `ElementNode("widget", ["class"=>class, "name"=>name])`"""
+function ElementNode(name::AbstractString, attributes::Vector{Pair{String, String}})
+    ElementNode(name, [AttributeNode(name, value) for (name, value) in attributes], Node[])
 end
 
 function getindex(n::ElementNode, key::String)
@@ -74,7 +80,7 @@ function setindex!(n::ElementNode, value::String, key::String)
     if isempty(ii)
         push!(n.attributes, AttributeNode(key, value))
     else
-        n.attributes[ii[1]] = value
+        n.attributes[ii[1]] = AttributeNode(key, value)
     end
 end
 
