@@ -10,7 +10,7 @@ export  Node, Document, ElementNode, TextNode, AttributeNode,
         countnodes, countattributes,
         nodes, elements, textnodes, attributes, eachattribute,
         root, setroot!,
-        addchild!, addelement!,
+        addchild!, addchildren!, addelement!,
         parsexml,
         # Debug, remove later
         xmlparser, parse_node, parse_element
@@ -18,6 +18,7 @@ export  Node, Document, ElementNode, TextNode, AttributeNode,
 "All nodes in XML DOM is some type of Node."
 abstract type Node end
 
+"Top level of an XML DOM"
 mutable struct Document
     rootnode::Nullable{Node}
 end
@@ -27,6 +28,15 @@ function Document()
     Document(Nullable{Node}())
 end
 
+"""
+Represents an attribute inside a tag.
+
+# Example
+Here `class` and `name` are examples of attributs belonging to parent node
+`widget`.
+
+    <widget class="QCheckBox" name="checkBox">
+"""
 mutable struct AttributeNode <: Node
     # parent::Node
     name::String
@@ -103,6 +113,7 @@ attributes(n::ElementNode) = n.attributes
 eachattribute(n::Node) = AttributeNode[]
 eachattribute(n::ElementNode) = n.attributes
 
+"For an XML tag looking like `<foo>bar</foo>` the `nodename` would be foo"
 nodename(n::Node) = ""
 nodename(n::TextNode) = "text"
 nodename(n::ElementNode) = n.name
@@ -144,11 +155,27 @@ function addelement!(parent::Node, name::AbstractString)
     child
 end
 
+"Add `child` node to `parent` node"
 function addchild!(parent::Node, child::Node)
     error("Can't add children to nodes of type $(typeof(parent))")
 end
 
 addchild!(parent::ElementNode, child::Node) = push!(parent.children, child)
+
+"""
+    addchildren(parent, children::Vector{Pair{String, String}})
+    
+A convenience function for easily adding child elements to a parent node `p`.
+
+# Examples
+
+    addchildren!(node, ["x" => "10", "y" => "20"])
+"""
+function addchildren!(p::Node, children::Vector{Pair{String, String}})
+    for child in children
+        addchild!(p, ElementNode(first(child), last(child)))
+    end
+end
 
 tagstrip(tag::AbstractString) = strip(tag, ['<', '>', '/'])
 
