@@ -2,7 +2,7 @@
 # parser. This is so EzXML can be a drop in replacement. The benefits of this
 # parser over EzXML is that it has no dependencies. It is all pure Julia code.
 # The downside is that it just supports the most common XML features
-import Base: setindex!, getindex, show
+import Base: setindex!, getindex, show, haskey, findfirst
 
 export  Node, Document, ElementNode, TextNode, AttributeNode,
         nodename, iselement, istext, isattribute, hasroot,
@@ -12,6 +12,8 @@ export  Node, Document, ElementNode, TextNode, AttributeNode,
         root, setroot!,
         addchild!, addchildren!, addelement!,
         parsexml,
+        # XPath Query API
+        findfirst,
         # Debug, remove later
         xmlparser, parse_node, parse_element
 
@@ -75,6 +77,8 @@ end
 function ElementNode(name::AbstractString, attributes::Vector{Pair{String, String}})
     ElementNode(name, [AttributeNode(name, value) for (name, value) in attributes], Node[])
 end
+
+###### Public API #############
 
 function getindex(n::ElementNode, key::String)
     for m in n.attributes
@@ -176,6 +180,111 @@ function addchildren!(p::Node, children::Vector{Pair{String, String}})
         addchild!(p, ElementNode(first(child), last(child)))
     end
 end
+
+###### XPath API ######
+
+"""
+    findfirst(xpath, node)
+Locate first node with given path. This is simplified xpath syntax.
+
+    vertibrates/warm-blooded/mammals/humans
+
+"""
+function findfirst(xpath::AbstractString, node::Node)
+    findfirst(split(xpath, '/'), node)
+end
+
+"""
+    findfirst(xpath_array, node)
+Locate first node with given path. This is simplified xpath syntax.
+
+    findfirst(["vertibrates", "warm-blooded", "mammals", "humans"], node)
+
+"""
+function findfirst(xpath::Array{T}, node::Node) where T <: AbstractString
+    if isempty(xpath)
+        return node
+    end
+    tag = xpath[1]
+    for n in nodes(node)
+        if nodename(n) == tag
+            return findfirst(xpath[2:end], n)
+        end
+    end
+    nothing
+end
+
+function  findfirst(xpath::Array{T}, doc::Document) where T <: AbstractString
+    if isempty(xpath) ||  !hasroot(doc)
+        return nothing
+    end
+
+    r = root(doc)
+    tag = xpath[1]
+
+    if tag != nodename(r)
+        return nothing
+    end
+    findfirst(xpath[2:end], r)
+end
+
+function findfirst(xpath::AbstractString, doc::Document)
+    findfirst(split(xpath, '/'), doc) 
+end
+
+"""
+    findfirst(name, attribute, value, node) -> Node
+Finds first node with `name` which has an `attribute` with `value`. E.g.
+to locate a node `<egg foobar="spam"/>` you could write:
+    findfirst("egg", "foobar", "spam", parent_node)
+"""
+function findfirst(xpath::AbstractString, attribute::AbstractString, value::AbstractString, node::Node)
+    findfirst(split(xpath, '/'), attribute, value, node)
+end
+
+function findfirst(xpath::AbstractString, attribute::AbstractString, value::AbstractString, doc::Document)
+    findfirst(split(xpath, '/'), attribute, value, doc)
+end
+
+function findfirst(xpath::Array{T}, attribute::AbstractString, value::AbstractString, doc::Document) where T <: AbstractString
+    if isempty(xpath) ||  !hasroot(doc)
+        return nothing
+    end
+
+    r = root(doc)
+    tag = xpath[1]
+
+    if tag != nodename(r)
+        return nothing
+    end
+    findfirst(xpath[2:end], attribute, value, r)
+end
+
+function findfirst(xpath::Array{T}, attribute::AbstractString, value::AbstractString, node::Node) where T <: AbstractString
+    if isempty(xpath) return nothing end
+    name = xpath[end]
+    m = findfirst(xpath[1:end-1], node)
+    if m == nothing
+        return nothing
+    end
+    for n in nodes(m)
+       if nodename(n) == name && haskey(n, attribute) && n[attribute] == value
+           return n           
+       end 
+    end
+    return nothing
+end
+
+"""
+    haskey(node, attribute) -> Bool
+Check if XML node has a particular attribute. E.g.`haskey(n, "foobar")`
+would return `true` for `<egg foobar="spam"/>` but `false` for `<foobar egg="spam"/>` 
+"""
+function haskey(n::Node, key::AbstractString)
+    any(m->m.name == key, n.attributes)
+end
+
+###### Parsing ########
 
 tagstrip(tag::AbstractString) = strip(tag, ['<', '>', '/'])
 
@@ -291,6 +400,8 @@ function parsexml(xmlstring::AbstractString; ignore_declaration=false)
     p = Parser(l)
     Document(parse_element(p))
 end
+
+####### Show ###########
 
 function show(io::IO, doc::Document)
   if hasroot(doc)
