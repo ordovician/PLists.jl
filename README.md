@@ -33,5 +33,5 @@ I based the implementation on the documentation of [Old-Style ASCII Property Lis
 ## Installation
 Upgraded to work with the Julia 1.0 package manager. Get into package mode on the Julia command line using the ']' key.
 
-    pkg> add https://github.com/ordovician/EditorUtils.jl
+    pkg> add https://github.com/ordovician/PLists.jl
     
