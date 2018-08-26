@@ -53,7 +53,7 @@ function lex_basic(l::Lexer)
     		return lex_number
     	elseif ch == '"'
     		return lex_string
-    	elseif isalpha(ch)
+    	elseif isletter(ch)
     		return lex_identifier
         elseif ch == '<'
             return lex_hexbinary

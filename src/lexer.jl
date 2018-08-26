@@ -13,8 +13,9 @@ include("util.jl")
 const EOFChar = Char(0xC0) # Using illegal UTF8 as sentinel
 
 # Because it is practical to use single chars as tokens sometimes
-convert(::Type{TokenType}, ch::Char) = TokenType(Int(ch))
-convert(::Type{Char}, t::TokenType)  = Char(Int(t))
+TokenType(ch::Char) = TokenType(Int(ch))
+Char(t::TokenType)  = Char(Int(t))
+
 
 "Keeps track of string of code we want to turn into array of tokens"
 mutable struct Lexer
@@ -35,7 +36,7 @@ end
 "Advance the lexers position in the input"
 function next_char(l::Lexer)
 	l.pos = nextind(l.input, l.pos)
-    if l.pos > endof(l.input)
+    if l.pos > lastindex(l.input)
 		return EOFChar
 	end
 	return l.input[l.pos]
@@ -50,7 +51,7 @@ end
 "Check what the next character will be"
 function peek_char(l::Lexer)
 	pos = nextind(l.input, l.pos)
-    if pos > endof(l.input)
+    if pos > lastindex(l.input)
 		return EOFChar
 	end
 	return l.input[pos]
@@ -59,7 +60,7 @@ end
 function current_char(l::Lexer)
 	if l.pos < 1
 		error("Can't ask for current char before first char has been fetched")
-    elseif l.pos > endof(l.input)
+    elseif l.pos > lastindex(l.input)
         return EOFChar
 	end
 	return l.input[l.pos]
@@ -79,7 +80,7 @@ accept_char_run(l::Lexer, valid::String) = accept_char_run(ch->ch in valid, l)
 
 "Accept characters which `pred` evaluate to true. E.g. `accept_char_run(l, isdigit)`"
 function accept_char_run(pred::Function, l::Lexer)
-	while pred(peek_char(l)) 
+	while pred(peek_char(l))
         next_char(l)
     end
 end
@@ -151,7 +152,7 @@ function scan_number(l::Lexer)
 		accept_char_run(l, digits)
 	end
 	if accept_char(l, "eE")
-		accept(l, "-+")
+		accept_char(l, "-+")
 		accept_char_run(l, "0123456789")
 	end
     return true
@@ -187,15 +188,15 @@ end
 
 function scan_identifier(l::Lexer)
     ch = peek_char(l)
-    if !isalpha(ch)
+    if !isletter(ch)
         return false
     end
-    
+
     while ch != EOFChar && isalnum(ch)
         next_char(l)
         ch = peek_char(l)
     end
-    
+
     return true
 end
 
@@ -207,7 +208,7 @@ end
 
 function lex(input::AbstractString, start::Function)
     l = Lexer(input)
-    @schedule run(l, start)
+    @async run(l, start)
     return l
 end
 

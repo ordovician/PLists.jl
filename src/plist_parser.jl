@@ -2,9 +2,9 @@ export readplist_string, readplist
 
 function parse_obj(p::Parser)
     token = next_token(p)
-    
-    if     NUMBER == token.kind 
-        parse(token.lexeme)
+
+    if     NUMBER == token.kind
+        Meta.parse(token.lexeme)
     elseif STRING == token.kind || IDENT == token.kind
         token.lexeme
     elseif HEXBINARY == token.kind
@@ -22,7 +22,7 @@ parse_hexbinary(s::AbstractString) = hex2bytes(filter(isxdigit, s))
 
 function parse_array(p::Parser)
     array = []
-    
+
     expect(p, LPAREN)
     token = peek_token(p)
     if token.kind == RPAREN
@@ -41,7 +41,7 @@ end
 
 function parse_dict(p::Parser)
     dict =  Dict{Any, Any}()
-    
+
     expect(p, LBRACE)
     token = peek_token(p)
     while token.kind != RBRACE
@@ -58,11 +58,11 @@ end
 function readplist_string(text::AbstractString)
     l = lex_plist(text)
     p = Parser(l)
-    parse_obj(p)    
+    parse_obj(p)
 end
 
 function readplist(stream::IO)
-    text = readstring(stream)
+    text = read(stream, String)
     readplist_string(text)
 end
 

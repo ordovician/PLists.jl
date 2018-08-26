@@ -6,10 +6,10 @@ export  Parser,
 "Only evaluate and return `default` expression if `nullable` is null"
 macro get(nullable, default)
     quote
-        if isnull($(esc(nullable)))
+        if $(esc(nullable)) == nothing
             $(esc(default))
         else
-            get($(esc(nullable)))
+            $(esc(nullable))
         end
     end
 end
@@ -17,10 +17,10 @@ end
 "Keeps track of current state of parsing."
 mutable struct Parser
     lexer::Lexer
-    ahead_token::Nullable{Token}
-    backup_token::Nullable{Token}
+    ahead_token::Union{Token, Nothing}
+    backup_token::Union{Token, Nothing}
     function Parser(lexer::Lexer)
-        null = Nullable{Token}()
+        null = nothing
         new(lexer, null, null)
     end
 end
@@ -28,11 +28,11 @@ end
 function show(io::IO, p::Parser)
     print(io, "Parser($(p.lexer)")
     
-    if !isnull(p.ahead_token)
+    if p.ahead_token != nothing
         print(", $(get(p.ahead_token))") 
     end
     
-    if !isnull(p.backup_token)
+    if p.backup_token != nothing
         print(", $(get(p.backup_token))") 
     end
     print(")")
@@ -41,14 +41,14 @@ end
 "Move to next token from lexer"
 function next_token(p::Parser)
     t = @get(p.ahead_token, next_token(p.lexer))
-    p.backup_token = Nullable(t)
-    p.ahead_token  = Nullable{Token}() 
+    p.backup_token = t
+    p.ahead_token  = nothing 
     t
 end
 
 function peek_token(p::Parser)
     t = @get(p.ahead_token, next_token(p.lexer))
-    p.ahead_token = Nullable(t)
+    p.ahead_token = t
     t
 end
 

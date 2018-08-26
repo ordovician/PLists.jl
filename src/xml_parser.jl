@@ -6,7 +6,7 @@ import Base: setindex!, getindex, show, haskey, findfirst
 
 export  Node, Document, ElementNode, TextNode, AttributeNode,
         nodename, iselement, istext, isattribute, hasroot,
-        nodecontent, 
+        nodecontent,
         countnodes, countattributes,
         nodes, elements, textnodes, attributes, eachattribute,
         root, setroot!,
@@ -22,12 +22,12 @@ abstract type Node end
 
 "Top level of an XML DOM"
 mutable struct Document
-    rootnode::Nullable{Node}
+    rootnode::Union{Node, Nothing}
 end
 
 "Top level of an XML DOM"
 function Document()
-    Document(Nullable{Node}())
+    Document(nothing)
 end
 
 """
@@ -42,7 +42,7 @@ Here `class` and `name` are examples of attributs belonging to parent node
 mutable struct AttributeNode <: Node
     # parent::Node
     name::String
-    value::String 
+    value::String
 end
 
 "XML Node which can contain attributes and child nodes"
@@ -90,7 +90,7 @@ function getindex(n::ElementNode, key::String)
 end
 
 function setindex!(n::ElementNode, value::String, key::String)
-    ii = find(m->m.name == key, n.attributes)
+    ii = findall(m->m.name == key, n.attributes)
     if isempty(ii)
         push!(n.attributes, AttributeNode(key, value))
     else
@@ -143,11 +143,11 @@ countattributes(n::Node) = 0
 countattributes(n::ElementNode) = length(n.attributes)
 
 "Check if a root node has been set of XML document"
-hasroot(doc::Document) = !isnull(doc.rootnode)
+hasroot(doc::Document) = doc.rootnode != nothing
 
 "Get root node. Make sure you check if it exists first with `hasroot(n)`"
-root(n::Document) = get(n.rootnode)
-setroot!(n::Document) = n.rootnode = Nullable(n)
+root(n::Document) = n.rootnode
+setroot!(n::Document) = n.rootnode = n
 
 "Get content of all text nodes under `n`"
 nodecontent(n::TextNode) = n.content
@@ -168,7 +168,7 @@ addchild!(parent::ElementNode, child::Node) = push!(parent.children, child)
 
 """
     addchildren(parent, children::Vector{Pair{String, String}})
-    
+
 A convenience function for easily adding child elements to a parent node `p`.
 
 # Examples
@@ -229,7 +229,7 @@ function  findfirst(xpath::Array{T}, doc::Document) where T <: AbstractString
 end
 
 function findfirst(xpath::AbstractString, doc::Document)
-    findfirst(split(xpath, '/'), doc) 
+    findfirst(split(xpath, '/'), doc)
 end
 
 """
@@ -269,8 +269,8 @@ function findfirst(xpath::Array{T}, attribute::AbstractString, value::AbstractSt
     end
     for n in nodes(m)
        if nodename(n) == name && haskey(n, attribute) && n[attribute] == value
-           return n           
-       end 
+           return n
+       end
     end
     return nothing
 end
@@ -278,7 +278,7 @@ end
 """
     haskey(node, attribute) -> Bool
 Check if XML node has a particular attribute. E.g.`haskey(n, "foobar")`
-would return `true` for `<egg foobar="spam"/>` but `false` for `<foobar egg="spam"/>` 
+would return `true` for `<egg foobar="spam"/>` but `false` for `<foobar egg="spam"/>`
 """
 function haskey(n::Node, key::AbstractString)
     any(m->m.name == key, n.attributes)
@@ -299,8 +299,8 @@ function add_parsed_nodes!(parser::Parser, parent::ElementNode)
     t = peek_token(parser)
     while t.kind == BEGIN_TAG || t.kind == TEXT
         addchild!(parent, parse_node(parser))
-        t = peek_token(parser)    
-    end    
+        t = peek_token(parser)
+    end
 end
 
 function add_parsed_attribute_nodes!(parser::Parser, parent::ElementNode)
@@ -357,7 +357,7 @@ function parse_node(parser::Parser)
     elseif t.kind == TEXT
         parse_text(parser)::Node
     else
-        error("Had not expected token '$t' while looking for start of new XML node") 
+        error("Had not expected token '$t' while looking for start of new XML node")
     end
 end
 
@@ -366,31 +366,31 @@ xmlparser(s::AbstractString) = Parser(lex_xml(s))
 function strip_xml_header(xmlstring::AbstractString, ignore_declaration::Bool)
     # Get the XML declaration. It is not part of the XML DOM, so we want
     # to exclude it.
-    r = search(xmlstring, r"<\?xml.*\?>")
+    r = findfirst(r"<\?xml.*\?>", xmlstring)
     s = xmlstring # assume there is no XML declaration until proven otherwise
-    if isempty(r)
-        ignore_declaration || warn("Did not find any XML declaration such as <?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+    if r == nothing
+        ignore_declaration || @warn "Did not find any XML declaration such as <?xml version=\"1.0\" encoding=\"UTF-8\"?>"
     else
         s = xmlstring[last(r)+1:end]
         # Check encoding used
         decl = xmlstring[r]
         m = match(r"encoding=\"([\w-]+)\"", decl)
         if isempty(m.captures)
-            warn("Could not determine encoding, will assume UTF-8")
+            @warn "Could not determine encoding, will assume UTF-8"
         else
             encoding = m.captures[1]
             if uppercase(encoding) != "UTF-8"
-                warn("XML parser is not made to handle $encoding encoding. XML file should have UTF-8 encoding")
+                @warn "XML parser is not made to handle $encoding encoding. XML file should have UTF-8 encoding"
             end
         end
     end
-    
+
     # Skip DOC type as we don't handle it
-    r = search(s, r"<!DOCTYPE[^>]+>")
-    if !isempty(r)
+    r = findfirst(r"<!DOCTYPE[^>]+>", s)
+    if r != nothing
         s = s[last(r)+1:end]
     end
-    return s    
+    return s
 end
 
 "Parse a text string containing XML, and return an XML document object"
@@ -420,7 +420,7 @@ function show(io::IO, n::Node, depth::Integer = 0)
 end
 
 function show(io::IO, n::AttributeNode)
-   print(io, n.name, "=\"", n.value,"\"") 
+   print(io, n.name, "=\"", n.value,"\"")
 end
 
 function show(io::IO, n::TextNode, depth::Integer)
@@ -430,16 +430,16 @@ end
 
 function show(io::IO, parent::ElementNode, depth::Integer = 0)
     print(io, "  "^depth)
-    
+
     tag = nodename(parent)
     print(io, "<$tag")
     attrs = map(x -> x.name * "=\"$(x.value)\"", attributes(parent))
     attr_str = join(attrs, " ")
-    
+
     if !isempty(attr_str)
         print(io, " ", attr_str)
     end
-    
+
     children = nodes(parent)
     len = length(children)
 

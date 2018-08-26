@@ -1,5 +1,5 @@
 using PLists
-using Base.Test
+using Test
 
 @testset "All Tests" begin
 

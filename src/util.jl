@@ -17,5 +17,5 @@ function chr2ind(s::AbstractString, i::Integer, offset::Integer)
             k = nextind(s, k)
         end
     end
-    clamp(k, 1, endof(s))
+    clamp(k, 1, lastindex(s))
 end

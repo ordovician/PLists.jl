@@ -24,7 +24,7 @@ end
 
 # Quotes strings which are not simple alphanumeric. 
 function encode(s::AbstractString)
-    if all(isalnum, s) && length(s) > 0 && isalpha(s[1])
+    if all(isalnum, s) && length(s) > 0 && isletter(s[1])
         s
     else
         "\"$s\""

@@ -30,8 +30,8 @@ I based the implementation on the documentation of [Old-Style ASCII Property Lis
         AnimalColors = { pig = pink; lamb = black; worm = pink; };
     }
 
-[![Build Status](https://travis-ci.org/ordovician/PLists.jl.svg?branch=master)](https://travis-ci.org/ordovician/PLists.jl)
+## Installation
+Upgraded to work with the Julia 1.0 package manager. Get into package mode on the Julia command line using the ']' key.
 
-[![Coverage Status](https://coveralls.io/repos/ordovician/PLists.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/ordovician/PLists.jl?branch=master)
-
-[![codecov.io](http://codecov.io/github/ordovician/PLists.jl/coverage.svg?branch=master)](http://codecov.io/github/ordovician/PLists.jl?branch=master)
+    pkg> add https://github.com/ordovician/EditorUtils.jl
+    

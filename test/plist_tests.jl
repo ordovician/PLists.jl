@@ -16,7 +16,7 @@
         @test next_token(l) == Token(SEMICOLON, ";")
         @test next_token(l) == Token(RBRACE, "}")
     end
-    
+
     @testset "Numbers and Identifiers Lexing" begin
         l = lex_plist("one 2 three 3 five")
         @test next_token(l) == Token(IDENT, "one")
@@ -26,7 +26,7 @@
         @test next_token(l) == Token(IDENT, "five")
     end
 end
-    
+
 @testset "Parser tests" begin
     @testset "Numbers and Identifiers Parser" begin
         l = lex_plist("{eggs = spam; foo = (bar, \"foo bar\");}")
@@ -60,7 +60,7 @@ end
         @test peek_token_type(p) == RBRACE
         next_token(p)
         @test peek_token_type(p) == EOF
-    
+
         # strange_tokens = token_producer("\"Dot(u Vector2D) float64\" \"()\$0\"")
         # @test pop!(strange_tokens) == Token(STRING, "Dot(u Vector2D) float64")
         # @test pop!(strange_tokens) == Token(STRING, "()\$0")
@@ -118,7 +118,7 @@ end
         @test nodecontent(n) == "Author"
         @test countnodes(r) == 1
     end
-    
+
     @testset "Test Element Nodes Hierarchy" begin
         doc = parsexml("<numbers><one>en</one><two>to</two><three>tre</three></numbers>", ignore_declaration=true)
         @test hasroot(doc)
@@ -126,16 +126,16 @@ end
         @test nodename(r) == "numbers"
         @test nodecontent(r) == "entotre"
         @test countnodes(r) == 3
-        
+
         @test nodecontent(nodes(r)[1]) == "en"
         @test nodecontent(nodes(r)[2]) == "to"
         @test nodecontent(nodes(r)[3]) == "tre"
-        
+
         @test nodename(nodes(r)[1]) == "one"
         @test nodename(nodes(r)[2]) == "two"
         @test nodename(nodes(r)[3]) == "three"
     end
-    
+
     @testset "Test Small Example" begin
         doc = parsexml("""
         <primates>
@@ -173,7 +173,7 @@ end
         @test dict["Lines"][2]  == "Full of sound and fury, signifying nothing."
         @test dict["Birthdate"] == 1564
     end
-    
+
     @testset "Simple PList tests" begin
             dict = read_xml_plist_string(
             """
@@ -192,17 +192,17 @@ end
             @test dict["numbers"][1] == "one"
             @test dict["numbers"][2] == "two"
     end
-    
+
     @testset "Test PList parsing independent from XML parsing" begin
         root = ElementNode("plist")
         root["version"] = "1.0"
-        strings  = Node[ElementNode("string", "one"), ElementNode("string", "two")] 
-        children = Node[ElementNode("key", "egg"), 
+        strings  = Node[ElementNode("string", "one"), ElementNode("string", "two")]
+        children = Node[ElementNode("key", "egg"),
                         ElementNode("string", "spam"),
                         ElementNode("key", "numbers"),
                         ElementNode("array", strings)]
         addchild!(root, ElementNode("dict", children))
-        
+
         dict = PLists.parse_obj(root)
         @test dict["egg"] == "spam"
         @test dict["numbers"][1] == "one"

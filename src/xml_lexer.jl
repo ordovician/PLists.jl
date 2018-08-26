@@ -71,7 +71,7 @@ function lex_inside_tag(l::Lexer)
             end
     	elseif ch == '"'
     		return lex_attrib_string
-    	elseif isalpha(ch)
+    	elseif isletter(ch)
     		return lex_attrib_ident
         elseif ch == '='
             next_char(l)

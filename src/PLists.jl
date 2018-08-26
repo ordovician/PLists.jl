@@ -1,5 +1,7 @@
 module PLists
 
+isalnum(c::Char) = isletter(c) || isnumeric(c)
+
 include("plist_lexer.jl")
 include("xml_lexer.jl")
 include("parser.jl")
