@@ -13,7 +13,7 @@ export  Node, Document, ElementNode, TextNode, AttributeNode,
         addchild!, addchildren!, addelement!,
         parsexml,
         # XPath Query API
-        findfirst,
+        locatefirst,
         # Debug, remove later
         xmlparser, parse_node, parse_element
 
@@ -184,37 +184,37 @@ end
 ###### XPath API ######
 
 """
-    findfirst(xpath, node)
+    locatefirst(xpath, node)
 Locate first node with given path. This is simplified xpath syntax.
 
     vertibrates/warm-blooded/mammals/humans
 
 """
-function findfirst(xpath::AbstractString, node::Node)
-    findfirst(split(xpath, '/'), node)
+function locatefirst(xpath::AbstractString, node::Node)
+    locatefirst(split(xpath, '/'), node)
 end
 
 """
-    findfirst(xpath_array, node)
+    locatefirst(xpath_array, node)
 Locate first node with given path. This is simplified xpath syntax.
 
-    findfirst(["vertibrates", "warm-blooded", "mammals", "humans"], node)
+    locatefirst(["vertibrates", "warm-blooded", "mammals", "humans"], node)
 
 """
-function findfirst(xpath::Array{T}, node::Node) where T <: AbstractString
+function locatefirst(xpath::Array{T}, node::Node) where T <: AbstractString
     if isempty(xpath)
         return node
     end
     tag = xpath[1]
     for n in nodes(node)
         if nodename(n) == tag
-            return findfirst(xpath[2:end], n)
+            return locatefirst(xpath[2:end], n)
         end
     end
     nothing
 end
 
-function  findfirst(xpath::Array{T}, doc::Document) where T <: AbstractString
+function  locatefirst(xpath::Array{T}, doc::Document) where T <: AbstractString
     if isempty(xpath) ||  !hasroot(doc)
         return nothing
     end
@@ -225,28 +225,28 @@ function  findfirst(xpath::Array{T}, doc::Document) where T <: AbstractString
     if tag != nodename(r)
         return nothing
     end
-    findfirst(xpath[2:end], r)
+    locatefirst(xpath[2:end], r)
 end
 
-function findfirst(xpath::AbstractString, doc::Document)
-    findfirst(split(xpath, '/'), doc)
+function locatefirst(xpath::AbstractString, doc::Document)
+    locatefirst(split(xpath, '/'), doc)
 end
 
 """
-    findfirst(name, attribute, value, node) -> Node
+    locatefirst(name, attribute, value, node) -> Node
 Finds first node with `name` which has an `attribute` with `value`. E.g.
 to locate a node `<egg foobar="spam"/>` you could write:
-    findfirst("egg", "foobar", "spam", parent_node)
+    locatefirst("egg", "foobar", "spam", parent_node)
 """
-function findfirst(xpath::AbstractString, attribute::AbstractString, value::AbstractString, node::Node)
-    findfirst(split(xpath, '/'), attribute, value, node)
+function locatefirst(xpath::AbstractString, attribute::AbstractString, value::AbstractString, node::Node)
+    locatefirst(split(xpath, '/'), attribute, value, node)
 end
 
-function findfirst(xpath::AbstractString, attribute::AbstractString, value::AbstractString, doc::Document)
-    findfirst(split(xpath, '/'), attribute, value, doc)
+function locatefirst(xpath::AbstractString, attribute::AbstractString, value::AbstractString, doc::Document)
+    locatefirst(split(xpath, '/'), attribute, value, doc)
 end
 
-function findfirst(xpath::Array{T}, attribute::AbstractString, value::AbstractString, doc::Document) where T <: AbstractString
+function locatefirst(xpath::Array{T}, attribute::AbstractString, value::AbstractString, doc::Document) where T <: AbstractString
     if isempty(xpath) ||  !hasroot(doc)
         return nothing
     end
@@ -257,13 +257,13 @@ function findfirst(xpath::Array{T}, attribute::AbstractString, value::AbstractSt
     if tag != nodename(r)
         return nothing
     end
-    findfirst(xpath[2:end], attribute, value, r)
+    locatefirst(xpath[2:end], attribute, value, r)
 end
 
-function findfirst(xpath::Array{T}, attribute::AbstractString, value::AbstractString, node::Node) where T <: AbstractString
+function locatefirst(xpath::Array{T}, attribute::AbstractString, value::AbstractString, node::Node) where T <: AbstractString
     if isempty(xpath) return nothing end
     name = xpath[end]
-    m = findfirst(xpath[1:end-1], node)
+    m = locatefirst(xpath[1:end-1], node)
     if m == nothing
         return nothing
     end
