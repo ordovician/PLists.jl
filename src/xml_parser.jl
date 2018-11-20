@@ -5,7 +5,7 @@
 import Base: setindex!, getindex, show, haskey, findfirst
 
 export  Node, Document, ElementNode, TextNode, AttributeNode,
-        nodename, iselement, istext, isattribute, hasroot,
+        nodename, iselement, istext, isattribute, hasroot, hasnode,
         nodecontent,
         countnodes, countattributes,
         nodes, elements, textnodes, attributes, eachattribute,
@@ -153,6 +153,13 @@ setroot!(n::Document) = n.rootnode = n
 nodecontent(n::TextNode) = n.content
 nodecontent(n::Node) = join(map(nodecontent, nodes(n)))
 
+"""
+    hasnode(node)
+Return if `node` has a child node.
+"""
+hasnode(n::Node) = false
+hasnode(n::ElementNode) = !isempty(n.children)
+
 function addelement!(parent::Node, name::AbstractString)
     child = ElementNode(name)
     addchild!(parent, child)
@@ -161,13 +168,17 @@ end
 
 "Add `child` node to `parent` node"
 function addchild!(parent::Node, child::Node)
-    error("Can't add children to nodes of type $(typeof(parent))")
+    error("Can't add children to nodes of type $(typeof(p))")
 end
 
 addchild!(parent::ElementNode, child::Node) = push!(parent.children, child)
 
+function addchildren!(p::Node, children)
+    error("Can't add children to nodes of type $(typeof(p))")    
+end
+
 """
-    addchildren(parent, children::Vector{Pair{String, String}})
+    addchildren!(parent, children::Vector{Pair{String, String}})
 
 A convenience function for easily adding child elements to a parent node `p`.
 
@@ -175,10 +186,23 @@ A convenience function for easily adding child elements to a parent node `p`.
 
     addchildren!(node, ["x" => "10", "y" => "20"])
 """
-function addchildren!(p::Node, children::Vector{Pair{String, String}})
+function addchildren!(p::ElementNode, children::Vector{Pair{String, String}})
     for child in children
         addchild!(p, ElementNode(first(child), last(child)))
     end
+end
+
+"""
+    addchildren!(parent, children::Vector{Node})
+
+For easily adding multiple children to a parent node.
+
+# Examples
+
+    addchildren!(node, [ElementNode("foo"), ElementNode("bar")])
+"""
+function addchildren!(p::ElementNode, children::Vector{T}) where T <: Node
+    append!(p.children, children)
 end
 
 ###### XPath API ######
@@ -443,7 +467,9 @@ function show(io::IO, parent::ElementNode, depth::Integer = 0)
     children = nodes(parent)
     len = length(children)
 
-    if len == 0 || (len == 1 && istext(first(children)))
+    if len == 0
+        println(io, "/>")
+    elseif len == 1 && istext(first(children))
         print(io, ">")
         for n in children show(io, n) end
     else
@@ -453,5 +479,8 @@ function show(io::IO, parent::ElementNode, depth::Integer = 0)
         end
         print(io, "  "^depth)
     end
-    println(io, "</$tag>")
+    
+    if len != 0
+        println(io, "</$tag>")
+    end
 end
