@@ -1,5 +1,3 @@
-import Base: chr2ind
-
 """
     chr2ind(s, i, offset)
     
