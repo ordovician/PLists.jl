@@ -15,7 +15,9 @@ export  Node, Document, ElementNode, TextNode, AttributeNode,
         # XPath Query API
         locatefirst,
         # Debug, remove later
-        xmlparser, parse_node, parse_element
+        xmlparser, parse_node, parse_element,
+        # Text representation
+        xml
 
 "All nodes in XML DOM is some type of Node."
 abstract type Node end
@@ -425,34 +427,64 @@ function parsexml(xmlstring::AbstractString; ignore_declaration=false)
     Document(parse_element(p))
 end
 
-####### Show ###########
-
+####### Show s-expression ###########
 function show(io::IO, doc::Document)
-  if hasroot(doc)
-    show(io, root(doc), 1)
-  else
-    print(io, "Document()")
-  end
+    print(io, "(Document")
+    if hasroot(doc)
+        show(io, root(doc), 1)
+    else
+        print(io, ")")
+    end
 end
 
-function show(io::IO, n::TextNode)
+function show(io::IO, p::Node, depth::Integer = 0)
+    println(io)
+    print(io, "  "^depth)
+    print(io, "(", typeof(p), " \"")
+    print(io, istext(p) ? nodecontent(p) : nodename(p))
+    print(io, "\"")
+    children = nodes(p)
+    if isempty(children)
+        print(io, ")")
+    else
+        # println(io)
+        for n in children
+            show(io, n, depth + 1)
+        end
+        # print(io, "  "^depth)
+        print(io, ")")
+    end
+end
+
+####### XML ###########
+xml(node) = xml(stdout, node)
+
+function xml(io::IO, doc::Document)
+    if hasroot(doc)
+        xml(io, root(doc), 1)
+    else
+        print(io, "Document()")
+    end
+end
+
+function xml(io::IO, n::TextNode)
     print(io, n.content)
 end
 
-function show(io::IO, n::Node, depth::Integer = 0)
+function xml(io::IO, n::Node, depth::Integer = 0)
     print(io, "Unknown node type")
 end
 
-function show(io::IO, n::AttributeNode)
+function xml(io::IO, n::AttributeNode)
    print(io, n.name, "=\"", n.value,"\"")
 end
 
-function show(io::IO, n::TextNode, depth::Integer)
+function xml(io::IO, n::TextNode, depth::Integer)
     print(io, "  "^depth)
     println(io, n.content)
 end
 
-function show(io::IO, parent::ElementNode, depth::Integer = 0)
+function xml(io::IO, parent::ElementNode, depth::Integer = 0)
     print(io, "  "^depth)
 
     tag = nodename(parent)
@@ -471,11 +503,11 @@ function show(io::IO, parent::ElementNode, depth::Integer = 0)
         println(io, "/>")
     elseif len == 1 && istext(first(children))
         print(io, ">")
-        for n in children show(io, n) end
+        for n in children xml(io, n) end
     else
         println(io, ">")
         for n in children
-            show(io, n, depth + 1)
+            xml(io, n, depth + 1)
         end
         print(io, "  "^depth)
     end

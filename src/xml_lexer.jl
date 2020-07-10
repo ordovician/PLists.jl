@@ -84,14 +84,14 @@ function lex_inside_tag(l::Lexer)
 end
 
 function lex_xml(l::Lexer)
-	while true
+    while true
         ignore_whitespace(l)
-    	ch = peek_char(l)
+        ch = peek_char(l)
 
-    	if ch == EOFChar
-    		emit_token(l, EOF)
+        if ch == EOFChar
+            emit_token(l, EOF)
             return lex_end
-    	elseif ch == '<'
+        elseif ch == '<'
             return lex_begin_tag
         else
            return lex_text 
