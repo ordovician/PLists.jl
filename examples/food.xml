@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu>
+    <snacks>
+        <food>
+            <name>Guacamole and Totopos</name>
+            <price>95</price>
+        </food>
+        <food>
+            <name>Quesadillas</name>
+            <price>65</price>
+        </food>
+    </snacks>
+    <tacos>
+        <food>
+            <name>Bistec</name>
+            <price>80</price>
+        </food>
+        <food>
+            <name>Barbacoa</name>
+            <price>65</price>
+        </food>        
+    </tacos>
+</menu>
