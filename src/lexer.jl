@@ -96,7 +96,7 @@ end
 
 "Send token of type `t` with lexeme `s` to channel `l.tokens`"
 function emit_token(l::Lexer, t::TokenType, s::AbstractString)
-	token = Token(t, s)
+    token = Token(t, s)
     put!(l.tokens, token)
     l.start = l.pos + 1
 end
