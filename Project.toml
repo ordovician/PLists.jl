@@ -1,7 +1,10 @@
 name = "PLists"
 uuid = "244549da-a957-11e8-2419-29f9eea8ace5"
 authors = ["Erik Engheim <erik.engheim@mac.com>"]
-version = "0.3.0"
+version = "1.1.1"
+
+[compat]
+julia = "1.4"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
