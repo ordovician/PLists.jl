@@ -1,4 +1,4 @@
-export  parsexml,
+export  parsexml, readxml,
         # Debug, remove later
         xmlparser, parse_node, parse_element
 
@@ -109,10 +109,29 @@ function strip_xml_header(xmlstring::AbstractString, ignore_declaration::Bool)
     return s
 end
 
-"Parse a text string containing XML, and return an XML document object"
+"""
+    parsexml(xmlstring::AbstractString; ignore_declaration=false)
+    
+Parse a text string containing XML, and return an XML document object
+"""
 function parsexml(xmlstring::AbstractString; ignore_declaration=false)
     s = strip_xml_header(xmlstring, ignore_declaration)
     l = lex_xml(s)
     p = Parser(l)
     Document(parse_element(p))
+end
+
+"""
+    readxml(stream::IO=stdin)
+    readxml(filename::AbstractString)
+    
+Read and parse XML from an I/O stream or file. Result is returned as an XML document object.
+"""
+function readxml(stream::IO=stdin)
+    text = read(stream, String)
+    parsexml(text)
+end
+
+function readxml(filename::AbstractString)
+    open(readxml, filename)
 end
