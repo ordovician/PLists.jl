@@ -77,7 +77,7 @@ end
 
 ###### Public API #############
 
-function getindex(n::ElementNode, key::String)
+function getindex(n::ElementNode, key::AbstractString)
     for m in n.attributes
         if m.name == key
             return m.value
@@ -86,7 +86,7 @@ function getindex(n::ElementNode, key::String)
     error("No attribute with key $key exist")
 end
 
-function setindex!(n::ElementNode, value::String, key::String)
+function setindex!(n::ElementNode, value::AbstractString, key::AbstractString)
     ii = findall(m->m.name == key, n.attributes)
     if isempty(ii)
         push!(n.attributes, AttributeNode(key, value))
@@ -94,6 +94,9 @@ function setindex!(n::ElementNode, value::String, key::String)
         n.attributes[ii[1]] = AttributeNode(key, value)
     end
 end
+
+getindex(n::ElementNode, i::Integer) = n.children[i]
+
 
 "Get all child nodes under node `n`"
 nodes(n::Node) = Node[]

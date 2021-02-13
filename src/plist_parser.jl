@@ -55,12 +55,26 @@ function parse_dict(p::Parser)
     dict
 end
 
+"""
+    readplist_string(text::AbstractString) -> Dict
+
+Parse a NeXTSTEP style property list stored in the string `text` and return result
+as a dictionary object.
+"""
 function readplist_string(text::AbstractString)
     l = lex_plist(text)
     p = Parser(l)
     parse_obj(p)
 end
 
+"""
+    readplist(stream::IO) -> Dict
+    readplist(filename::AbstractString) -> Dict
+
+Read a NeXTSTEP style PList from file named `filename`, or from an `IO` stream object
+you have opened previously. This could be from a file, a string or a socket. In each case
+you get a dictionary back.
+"""
 function readplist(stream::IO)
     text = read(stream, String)
     readplist_string(text)

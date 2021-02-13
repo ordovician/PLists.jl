@@ -1,7 +1,20 @@
 export writeplist_string, writeplist
 
+"""
+     writeplist_string(obj) -> String 
+     
+Returns a NeXTSTEP PList formatted string of the `obj` object. `obj` could
+be a string, number or nested dictionary.
+""" 
 writeplist_string(obj) = encode(obj)
-    
+
+"""
+     writeplist(stream::IO, obj)
+     writeplist(filename::AbstractString, obj)
+     
+Write an object to an IO `stream` or to a file named `filename` using the
+NeXTSTEP property list format. The `obj` could be a dictionary, number or string.
+"""    
 function writeplist(stream::IO, obj)
     print(stream, encode(obj))
 end    
