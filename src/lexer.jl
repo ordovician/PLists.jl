@@ -192,7 +192,7 @@ function scan_identifier(l::Lexer)
         return false
     end
 
-    while ch != EOFChar && isalnum(ch)
+    while ch != EOFChar && (isalnum(ch) || ch == '_')
         next_char(l)
         ch = peek_char(l)
     end
